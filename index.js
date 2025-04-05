@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
-const axios = require('axios');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const fs = require("node:fs");
+const mime = require("mime-types");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,29 +14,44 @@ app.use(express.json());
 const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
 
-// Gemini integration
-async function explainHardWordsWithGemini(text) {
-    const prompt = `Identify difficult or uncommon words and phrases in the following sentence for international students in the U.S. Explain each simply with an example:\n\n"${text}"`;
+const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+});  
+
+const generationConfig = {
+    temperature: 1,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+    responseModalities: [
+    ],
+    responseMimeType: "text/plain",
+};
+
+async function explainHardWordsWithGemini(sentence) {
+    const chatSession = model.startChat({
+        generationConfig,
+        history: [],
+    });
+
+    const prompt = `Identify difficult or uncommon words and phrases in the following sentence for international students in the U.S. Explain each simply with an example:\n\n"${sentence}"`;
 
     try {
-        const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                contents: [{ parts: [{ text: prompt }] }]
-            },
-            {
-                headers: { 'Content-Type': 'application/json' }
-            }
-        );
+        const result = await chatSession.sendMessage(prompt);
 
-        return response.data.candidates[0].content.parts[0].text;
-    } catch (error) {
-        console.error("Gemini error:", error.response?.data || error.message);
-        return "Error getting explanation from Gemini.";
+        const text = result.response.text();
+        console.log("Gemini Explanation:\n", text);
+
+        return text;
+    } catch (err) {
+        console.error("Gemini error:", err);
+        return "Error explaining with Gemini.";
     }
 }
+  
 
 // Webhook listener
 app.post('/webhook', (req, res) => {
@@ -147,6 +164,8 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
                     timestamp: msg.timestamp
                 }));
             }
+
+            console.log("Gemini response: ", explainHardWordsWithGemini(msg.content.data));
         } catch (err) {
             // Raw audio received
             console.log(`Received audio packet (${data.length} bytes)`);
