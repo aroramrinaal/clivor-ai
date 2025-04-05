@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
 const path = require('path');
+const { explainHardWordsWithGemini } = require('./utils/vocab'); 
 
 const app = express();
 const PORT = 3000;
@@ -15,8 +16,7 @@ const ZOOM_SECRET_TOKEN = '';
 const CLIENT_ID = '';
 const CLIENT_SECRET = '';
 
-
-//listen to the webhook
+// Webhook listener
 app.post('/webhook', (req, res) => {
     console.log('Incoming Webhook:', JSON.stringify(req.body, null, 2));
     const { event, payload } = req.body;
@@ -28,7 +28,6 @@ app.post('/webhook', (req, res) => {
         return res.json({ plainToken: payload.plainToken, encryptedToken: hash });
     }
 
-//listen to the rtms started event
     if (event === 'meeting.rtms_started') {
         const { meeting_uuid, rtms_stream_id, server_urls } = payload;
         connectToSignalingWebSocket(meeting_uuid, rtms_stream_id, server_urls);
@@ -41,12 +40,11 @@ app.post('/webhook', (req, res) => {
     res.sendStatus(200);
 });
 
-//generate signature
+// Signature generator
 function generateSignature(clientId, meetingUuid, streamId, secret) {
     const message = `${clientId},${meetingUuid},${streamId}`;
     return crypto.createHmac('sha256', secret).update(message).digest('hex');
 }
-
 
 function connectToSignalingWebSocket(meetingUuid, streamId, serverUrl) {
     const ws = new WebSocket(serverUrl);
@@ -111,7 +109,7 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
         mediaWs.send(JSON.stringify(handshake));
     });
 
-    mediaWs.on('message', (data) => {
+    mediaWs.on('message', async (data) => {
         try {
             const msg = JSON.parse(data.toString());
             console.log('Media JSON Message:', JSON.stringify(msg, null, 2));
@@ -129,9 +127,13 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
                     timestamp: msg.timestamp
                 }));
             }
+
+            console.log("Gemini response: ", await explainHardWordsWithGemini(msg.content.data));
         } catch (err) {
+            // Raw audio received
             console.log(`Received audio packet (${data.length} bytes)`);
-            console.log('Raw audio data (base64):', data.toString('base64'));
+            const base64Audio = data.toString('base64');
+            console.log('Raw audio data (base64):', base64Audio);
         }
     });
 
