@@ -100,12 +100,12 @@ function App() {
       
       <main>
         <section className="vocabulary-section">
-          <h2>Vocabulary Explanations</h2>
+          <h2>Real-time Analysis</h2>
           
           {messages.length === 0 ? (
             <div className="no-data">
-              <p>Waiting for vocabulary data...</p>
-              <p>Start a Zoom meeting with RTMS enabled to see real-time explanations.</p>
+              <p>Waiting for speech data...</p>
+              <p>Start a Zoom meeting with RTMS enabled to see real-time translations and explanations.</p>
               <p>Or click the "Test WebSocket Broadcast" button above to test.</p>
             </div>
           ) : (
@@ -113,13 +113,24 @@ function App() {
               {messages.map((msg, index) => (
                 <div key={index} className="message-card">
                   <div className="original-text">
-                    <h3>Original Text:</h3>
+                    <h3>English</h3>
                     <p>{msg.originalText}</p>
                   </div>
+                  
+                  {msg.translation && (
+                    <div className="translation">
+                      <h3>Spanish Translation</h3>
+                      <div className="translation-content">
+                        <p>{msg.translation}</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="explanation">
-                    <h3>Explanation:</h3>
+                    <h3>Vocabulary Explanations</h3>
                     <div dangerouslySetInnerHTML={{ __html: msg.explanation }}></div>
                   </div>
+                  
                   {msg.timestamp && (
                     <div className="timestamp">
                       {new Date(msg.timestamp).toLocaleTimeString()}

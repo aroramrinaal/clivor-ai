@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const path = require('path');
 const http = require('http');
 const { explainHardWordsWithGemini } = require('./utils/vocab'); 
+const { translateText } = require('./utils/translate');
 
 const app = express();
 const PORT = 3000;
@@ -168,11 +169,16 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
                 const explanation = await explainHardWordsWithGemini(msg.content.data);
                 console.log("Gemini response: ", explanation);
                 
+                // Get Spanish translation
+                const translation = await translateText(msg.content.data, "Spanish");
+                console.log("Spanish translation: ", translation);
+                
                 // Broadcast to all connected frontend clients
                 broadcastToClients({
                     type: 'vocabulary',
                     originalText: msg.content.data,
-                    explanation: explanation
+                    explanation: explanation,
+                    translation: translation
                 });
             }
         } catch (err) {
@@ -202,7 +208,8 @@ app.get('/api/test-broadcast', (req, res) => {
     const testData = {
         type: 'vocabulary',
         originalText: "Despite the red tape, she managed to secure a green card.",
-        explanation: "- **red tape**: Excessive bureaucracy or regulations that make it difficult to get something done.\n- **green card**: A United States Permanent Resident Card, which allows non-citizens to live and work permanently in the US.",
+        explanation: "<div class=\"vocab-item\"><strong class=\"vocab-word\">red tape</strong>: <span class=\"vocab-explanation\">Excessive bureaucracy or regulations that make it difficult to get something done. Example: The project was delayed due to government red tape.</span></div><div class=\"vocab-item\"><strong class=\"vocab-word\">green card</strong>: <span class=\"vocab-explanation\">A United States Permanent Resident Card, which allows non-citizens to live and work permanently in the US. Example: After living in the US for several years, she finally received her green card.</span></div>",
+        translation: "A pesar de la burocracia, logró obtener una tarjeta verde.",
         timestamp: new Date().toISOString()
     };
     

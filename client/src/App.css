@@ -234,11 +234,11 @@ main {
   border-left-width: 5px;
 }
 
-.original-text, .explanation {
+.original-text, .explanation, .translation {
   margin-bottom: 1.5rem;
 }
 
-.original-text h3, .explanation h3 {
+.original-text h3, .explanation h3, .translation h3 {
   font-size: 1.1rem;
   margin-bottom: 0.7rem;
   color: #ff63d8;
@@ -247,15 +247,14 @@ main {
   align-items: center;
 }
 
-.original-text h3::before, .explanation h3::before {
+.original-text h3::before, .explanation h3::before, .translation h3::before {
   content: '';
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
   background-color: #ff63d8;
   border-radius: 50%;
-  margin-right: 8px;
-  opacity: 0.7;
 }
 
 .original-text p {
@@ -383,4 +382,45 @@ footer {
 
 .vocab-explanation {
   color: rgba(255, 255, 255, 0.9);
+}
+
+.translation {
+  position: relative;
+}
+
+.translation::before {
+  content: '';
+  position: absolute;
+  left: -1.5rem;
+  top: 1.5rem;
+  height: calc(100% - 3rem);
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, #4cffb3, transparent);
+}
+
+.translation-content {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem;
+  border-radius: 8px;
+  position: relative;
+}
+
+.translation p {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 6px;
+  color: #4cffb3;
+  line-height: 1.6;
+  font-size: 1.05rem;
+  border-left: 2px solid #4cffb3;
+  font-family: 'Georgia', serif;
+  position: relative;
+}
+
+/* Add language flag icons */
+.original-text h3::after,
+.translation h3::after {
+  content: '🌐';
+  margin-left: 6px;
+  font-size: 0.9rem;
 }
