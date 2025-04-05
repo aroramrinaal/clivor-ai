@@ -1,16 +1,19 @@
-require('dotenv').config();
 const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json());
 
-const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
+// Serve static files from the Vite build output directory
+app.use(express.static(path.join(__dirname, 'client', 'dist')));
+
+const ZOOM_SECRET_TOKEN = '';
+const CLIENT_ID = '';
+const CLIENT_SECRET = '';
 
 
 //listen to the webhook
@@ -140,6 +143,16 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
         console.log('Media socket closed');
     });
 }
+
+// Serve the main index.html for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+});
+
+// Catch-all route to handle client-side routing (must be after API routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+});
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
