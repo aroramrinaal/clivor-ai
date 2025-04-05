@@ -5,6 +5,9 @@ function App() {
   const [count, setCount] = useState(0)
   const [connected, setConnected] = useState(false)
   const [messages, setMessages] = useState([])
+  const [reviews, setReviews] = useState([])
+  const [streamingContent, setStreamingContent] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
   const [connectionDetails, setConnectionDetails] = useState('Connecting...')
   const wsRef = useRef(null)
   
@@ -16,6 +19,20 @@ function App() {
       console.log('Test broadcast response:', data)
     } catch (err) {
       console.error('Error triggering test broadcast:', err)
+    }
+  }
+  
+  // Function to trigger test streaming
+  const triggerTestStreaming = async () => {
+    try {
+      setIsStreaming(true)
+      setStreamingContent('')
+      const response = await fetch('/api/test-streaming')
+      const data = await response.json()
+      console.log('Test streaming response:', data)
+    } catch (err) {
+      console.error('Error triggering test streaming:', err)
+      setIsStreaming(false)
     }
   }
   
@@ -49,6 +66,18 @@ function App() {
         
         if (data.type === 'vocabulary') {
           setMessages(prev => [...prev, data])
+        } 
+        else if (data.type === 'review') {
+          setReviews(prev => [...prev, data])
+        }
+        else if (data.type === 'streaming') {
+          if (data.chunk) {
+            setStreamingContent(prev => prev + data.chunk)
+          }
+          // If we get an end marker or error, stop streaming mode
+          if (data.end || data.error) {
+            setIsStreaming(false)
+          }
         }
       } catch (err) {
         console.error('Error processing message:', err)
@@ -95,10 +124,45 @@ function App() {
           <button onClick={triggerTestBroadcast} className="test-button">
             Test WebSocket Broadcast
           </button>
+          <button onClick={triggerTestStreaming} className="test-button" disabled={isStreaming}>
+            {isStreaming ? 'Streaming...' : 'Test Streaming API'}
+          </button>
         </div>
       </header>
       
       <main>
+        {/* Streaming Section */}
+        {streamingContent && (
+          <section className="streaming-section">
+            <h2>Streaming Content {isStreaming && <span className="streaming-indicator">•••</span>}</h2>
+            <div className="streaming-container">
+              <p>{streamingContent}</p>
+            </div>
+          </section>
+        )}
+      
+        {/* Reviews Section */}
+        {reviews.length > 0 && (
+          <section className="reviews-section">
+            <h2>Periodic Reviews</h2>
+            <div className="reviews-container">
+              {reviews.map((review, index) => (
+                <div key={`review-${index}`} className="review-card">
+                  <h3>Content Review</h3>
+                  <div className="review-content">
+                    <div dangerouslySetInnerHTML={{ __html: review.review.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></div>
+                  </div>
+                  {review.timestamp && (
+                    <div className="timestamp">
+                      {new Date(review.timestamp).toLocaleTimeString()}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      
         <section className="vocabulary-section">
           <h2>Real-time Analysis</h2>
           
@@ -111,7 +175,7 @@ function App() {
           ) : (
             <div className="messages-container">
               {messages.map((msg, index) => (
-                <div key={index} className="message-card">
+                <div key={`vocab-${index}`} className="message-card">
                   <div className="original-text">
                     <h3>English</h3>
                     <p>{msg.originalText}</p>

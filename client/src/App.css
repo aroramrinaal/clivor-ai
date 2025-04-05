@@ -128,6 +128,7 @@ h1 {
 .test-controls {
   display: flex;
   margin-top: 1.5rem;
+  gap: 10px;
 }
 
 .test-button {
@@ -352,12 +353,26 @@ footer {
   
   .test-controls {
     flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
+    gap: 10px;
   }
 
   .test-button {
     width: 100%;
+  }
+  
+  .streaming-section,
+  .reviews-section {
+    padding: 1.5rem;
+  }
+  
+  .streaming-section h2,
+  .reviews-section h2 {
+    font-size: 1.5rem;
+  }
+  
+  .streaming-container,
+  .review-card {
+    padding: 1rem;
   }
 }
 
@@ -423,4 +438,166 @@ footer {
   content: '🌐';
   margin-left: 6px;
   font-size: 0.9rem;
+}
+
+/* Streaming Section */
+.streaming-section {
+  background-color: rgba(26, 26, 26, 0.6);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.streaming-section h2 {
+  color: white;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: inline-block;
+}
+
+.streaming-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(to right, #22c55e, #4ade80);
+  border-radius: 3px;
+}
+
+.streaming-indicator {
+  color: #4ade80;
+  animation: blink 1.5s infinite;
+  margin-left: 10px;
+  font-size: 1.5rem;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.streaming-container {
+  background: rgba(20, 20, 20, 0.7);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: left;
+  border-left: 3px solid #22c55e;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.streaming-container p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Review Section */
+.reviews-section {
+  background-color: rgba(26, 26, 26, 0.6);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.reviews-section h2 {
+  color: white;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: inline-block;
+}
+
+.reviews-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(to right, #6366f1, #818cf8);
+  border-radius: 3px;
+}
+
+.reviews-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.review-card {
+  background: rgba(20, 20, 20, 0.7);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: left;
+  border-left: 3px solid #6366f1;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.review-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.03), transparent);
+  z-index: -1;
+}
+
+.review-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-left-width: 5px;
+}
+
+.review-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.7rem;
+  color: #6366f1;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+
+.review-content {
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.8rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.review-content p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #f8fafc;
+  white-space: pre-wrap;
+  margin-bottom: 0.8rem;
+}
+
+.review-content strong {
+  color: #818cf8;
+  font-weight: 600;
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+  font-size: 1.05rem;
 }

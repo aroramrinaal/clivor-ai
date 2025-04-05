@@ -5,6 +5,7 @@ const path = require('path');
 const http = require('http');
 const { explainHardWordsWithGemini } = require('./utils/vocab'); 
 const { translateText } = require('./utils/translate');
+const { DataPool } = require('./utils/pool');
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +13,9 @@ const PORT = 3000;
 // Create HTTP server and WebSocket server
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+// Initialize data pool for collecting and reviewing content
+const dataPool = new DataPool(10000); // 10 seconds pooling period
 
 // Store connected clients
 const clients = new Set();
@@ -33,6 +37,11 @@ wss.on('connection', (ws) => {
     // Send initial connection message
     ws.send(JSON.stringify({ type: 'connected', message: 'Connected to Clivor.ai server' }));
 });
+
+// Setup data pool review callback
+dataPool.onReviewReady = (reviewData) => {
+    broadcastToClients(reviewData);
+};
 
 // Broadcast to all connected frontend clients
 function broadcastToClients(data) {
@@ -173,13 +182,19 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
                 const translation = await translateText(msg.content.data, "Spanish");
                 console.log("Spanish translation: ", translation);
                 
-                // Broadcast to all connected frontend clients
-                broadcastToClients({
+                const vocabData = {
                     type: 'vocabulary',
                     originalText: msg.content.data,
                     explanation: explanation,
-                    translation: translation
-                });
+                    translation: translation,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Broadcast to all connected frontend clients
+                broadcastToClients(vocabData);
+                
+                // Add data to the pool for periodic review
+                dataPool.addData(vocabData);
             }
         } catch (err) {
             // Raw audio received
@@ -213,8 +228,29 @@ app.get('/api/test-broadcast', (req, res) => {
         timestamp: new Date().toISOString()
     };
     
+    // Add to the data pool and broadcast
+    dataPool.addData(testData);
     broadcastToClients(testData);
+    
     res.json({ success: true, message: 'Test message broadcast to all connected clients', clientCount: clients.size });
+});
+
+// Test endpoint to trigger a streaming response
+app.get('/api/test-streaming', (req, res) => {
+    console.log(`Testing streaming API with ${clients.size} clients`);
+    
+    const testContent = "The economic outlook remains uncertain as inflation pressures persist despite central bank interventions. Market analysts suggest a cautious approach to investments while monitoring key indicators. Meanwhile, technological innovations continue to reshape various industries, creating both challenges and opportunities for businesses adapting to the digital transformation.";
+    
+    // Stream the response directly to clients
+    dataPool.streamSummarizeWithGemini(testContent, (streamChunk) => {
+        broadcastToClients({
+            type: 'streaming',
+            ...streamChunk,
+            timestamp: new Date().toISOString()
+        });
+    });
+    
+    res.json({ success: true, message: 'Streaming test initiated', clientCount: clients.size });
 });
 
 // Serve the main index.html for the root route
