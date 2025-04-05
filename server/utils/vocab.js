@@ -29,17 +29,7 @@ async function explainHardWordsWithGemini(sentence) {
         history: [],
     });
 
-    const prompt = `From the sentence below, identify difficult or uncommon English words or phrases that may be hard for international students in the U.S. 
-
-        Return the result as a JSON array in this format:
-        [
-        {
-            "word": "hard word here",
-            "explanation": "simple explanation with an example sentence"
-        }
-        ]
-
-        Sentence: "${sentence}"`;
+    const prompt = `Identify only genuinely advanced or uncommon words/phrases in: "${sentence}". For each, return a one-line JSON like [{"word":"...","explanation":"simple definition with example: '...'"}]. Use simple words in explanations. Skip common words. Target intermediate ESL learners.`;
 
     try {
         const result = await chatSession.sendMessage(prompt);
