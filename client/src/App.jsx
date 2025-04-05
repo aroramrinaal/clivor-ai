@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
@@ -78,12 +76,14 @@ function App() {
   
   return (
     <div className="app-container">
+      <div className="app-background"></div>
+      
       <header>
-        <div className="logo-container">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-          <img src={reactLogo} className="logo react" alt="React logo" />
+        <div className="brand">
+          <img src="/clivor.png" alt="Clivor Logo" className="clivor-logo" />
+          <h1>Clivor.ai</h1>
         </div>
-        <h1>Clivor.ai</h1>
+        
         <div className="connection-status">
           Status: {connected ? 
             <span className="connected">Connected</span> : 
@@ -118,7 +118,7 @@ function App() {
                   </div>
                   <div className="explanation">
                     <h3>Explanation:</h3>
-                    <p>{msg.explanation}</p>
+                    <div dangerouslySetInnerHTML={{ __html: msg.explanation }}></div>
                   </div>
                   {msg.timestamp && (
                     <div className="timestamp">
