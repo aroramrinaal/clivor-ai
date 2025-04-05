@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
@@ -57,9 +58,9 @@ app.use(express.json());
 // Serve static files from the Vite build output directory
 app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
-const ZOOM_SECRET_TOKEN = '';
-const CLIENT_ID = '';
-const CLIENT_SECRET = '';
+const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN;
+const CLIENT_ID = process.env.ZOOM_CLIENT_ID;
+const CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 
 // Webhook listener
 app.post('/webhook', (req, res) => {

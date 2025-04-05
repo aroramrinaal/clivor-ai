@@ -1,3 +1,4 @@
+require('dotenv').config();
 const {
     GoogleGenerativeAI,
     HarmCategory,
@@ -6,7 +7,7 @@ const {
   const fs = require("node:fs");
   const mime = require("mime-types");
   
-  const apiKey = '';
+  const apiKey = process.env.GEMINI_API_KEY;
   const genAI = new GoogleGenerativeAI(apiKey);
   
   const model = genAI.getGenerativeModel({

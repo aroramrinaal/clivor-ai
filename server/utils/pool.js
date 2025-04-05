@@ -1,7 +1,8 @@
+require('dotenv').config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Initialize Gemini API
-const apiKey = ''; // Replace with your actual API key
+const apiKey = process.env.GEMINI_API_KEY; // Replace with your actual API key
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
