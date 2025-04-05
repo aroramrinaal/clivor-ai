@@ -29,18 +29,43 @@ async function explainHardWordsWithGemini(sentence) {
         history: [],
     });
 
-    const prompt = `Identify only genuinely advanced or uncommon words/phrases in: "${sentence}". For each, return a one-line JSON like [{"word":"...","explanation":"simple definition with example: '...'"}]. Use simple words in explanations. Skip common words. Target intermediate ESL learners.`;
+    const prompt = `Identify only genuinely advanced or uncommon words/phrases in: "${sentence}". 
+For each, provide a clear, simple explanation with an example sentence.
+Return the response as a valid JSON array of objects with "word" and "explanation" properties.
+Format each explanation as a brief definition followed by an example sentence.
+Skip basic vocabulary and focus only on words that intermediate ESL learners might struggle with.
+Do not include any markdown formatting (like \`\`\`json) in your response.`;
 
     try {
         const result = await chatSession.sendMessage(prompt);
-
-        const text = result.response.text();
-        console.log("Gemini Explanation:\n", text);
-
-        return text;
+        let text = result.response.text();
+        
+        // Clean any markdown code block syntax
+        text = text.replace(/```json|```/g, '').trim();
+        
+        // Parse JSON response
+        let explanations;
+        try {
+            explanations = JSON.parse(text);
+            
+            // Format the explanations into HTML
+            const formattedOutput = explanations.map(item => 
+                `<div class="vocab-item">
+                    <strong class="vocab-word">${item.word}</strong>: 
+                    <span class="vocab-explanation">${item.explanation}</span>
+                </div>`
+            ).join('');
+            
+            return formattedOutput;
+        } catch (jsonError) {
+            console.error("Error parsing JSON from Gemini:", jsonError);
+            console.log("Raw text received:", text);
+            // Return cleaned text even if JSON parse failed
+            return `<p>Unable to format properly:</p><pre>${text}</pre>`;
+        }
     } catch (err) {
         console.error("Gemini error:", err);
-        return "Error explaining with Gemini.";
+        return "<p>Error explaining with Gemini.</p>";
     }
 }
 

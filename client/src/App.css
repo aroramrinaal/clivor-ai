@@ -361,3 +361,26 @@ footer {
     width: 100%;
   }
 }
+
+/* Vocabulary Explanations Styling */
+.vocab-item {
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(255, 99, 216, 0.1);
+}
+
+.vocab-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.vocab-word {
+  color: #ff63d8;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.vocab-explanation {
+  color: rgba(255, 255, 255, 0.9);
+}
