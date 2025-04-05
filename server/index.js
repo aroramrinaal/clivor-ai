@@ -2,15 +2,50 @@ const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
 const path = require('path');
+const http = require('http');
 const { explainHardWordsWithGemini } = require('./utils/vocab'); 
 
 const app = express();
 const PORT = 3000;
 
+// Create HTTP server and WebSocket server
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Store connected clients
+const clients = new Set();
+
+// WebSocket connection handler for frontend clients
+wss.on('connection', (ws) => {
+    console.log('Frontend client connected');
+    clients.add(ws);
+    
+    ws.on('message', (message) => {
+        console.log('Received from client:', message.toString());
+    });
+    
+    ws.on('close', () => {
+        console.log('Frontend client disconnected');
+        clients.delete(ws);
+    });
+    
+    // Send initial connection message
+    ws.send(JSON.stringify({ type: 'connected', message: 'Connected to Clivor.ai server' }));
+});
+
+// Broadcast to all connected frontend clients
+function broadcastToClients(data) {
+    clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data));
+        }
+    });
+}
+
 app.use(express.json());
 
 // Serve static files from the Vite build output directory
-app.use(express.static(path.join(__dirname, 'client', 'dist')));
+app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
 const ZOOM_SECRET_TOKEN = '';
 const CLIENT_ID = '';
@@ -128,12 +163,26 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
                 }));
             }
 
-            console.log("Gemini response: ", await explainHardWordsWithGemini(msg.content.data));
+            // If there's content to process with Gemini
+            if (msg.content && msg.content.data) {
+                const explanation = await explainHardWordsWithGemini(msg.content.data);
+                console.log("Gemini response: ", explanation);
+                
+                // Broadcast to all connected frontend clients
+                broadcastToClients({
+                    type: 'vocabulary',
+                    originalText: msg.content.data,
+                    explanation: explanation
+                });
+            }
         } catch (err) {
             // Raw audio received
             console.log(`Received audio packet (${data.length} bytes)`);
             const base64Audio = data.toString('base64');
             console.log('Raw audio data (base64):', base64Audio);
+            
+            // You could also broadcast audio data if needed
+            // broadcastToClients({ type: 'audio', data: base64Audio });
         }
     });
 
@@ -146,16 +195,33 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
     });
 }
 
+// Test endpoint to verify WebSocket broadcasting
+app.get('/api/test-broadcast', (req, res) => {
+    console.log(`Broadcasting test message to ${clients.size} clients`);
+    
+    const testData = {
+        type: 'vocabulary',
+        originalText: "Despite the red tape, she managed to secure a green card.",
+        explanation: "- **red tape**: Excessive bureaucracy or regulations that make it difficult to get something done.\n- **green card**: A United States Permanent Resident Card, which allows non-citizens to live and work permanently in the US.",
+        timestamp: new Date().toISOString()
+    };
+    
+    broadcastToClients(testData);
+    res.json({ success: true, message: 'Test message broadcast to all connected clients', clientCount: clients.size });
+});
+
 // Serve the main index.html for the root route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
 // Catch-all route to handle client-side routing (must be after API routes)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
+// Use server.listen instead of app.listen
+server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`WebSocket server is running on ws://localhost:${PORT}`);
 });
