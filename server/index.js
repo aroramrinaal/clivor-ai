@@ -1,57 +1,20 @@
-require('dotenv').config();
 const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const fs = require("node:fs");
-const mime = require("mime-types");
+const path = require('path');
+const { explainHardWordsWithGemini } = require('./utils/vocab'); 
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json());
 
-const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
+// Serve static files from the Vite build output directory
+app.use(express.static(path.join(__dirname, 'client', 'dist')));
 
-const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-});  
-
-const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
-    responseModalities: [
-    ],
-    responseMimeType: "text/plain",
-};
-
-async function explainHardWordsWithGemini(sentence) {
-    const chatSession = model.startChat({
-        generationConfig,
-        history: [],
-    });
-
-    const prompt = `Identify difficult or uncommon words and phrases in the following sentence for international students in the U.S. Explain each simply with an example:\n\n"${sentence}"`;
-
-    try {
-        const result = await chatSession.sendMessage(prompt);
-
-        const text = result.response.text();
-        console.log("Gemini Explanation:\n", text);
-
-        return text;
-    } catch (err) {
-        console.error("Gemini error:", err);
-        return "Error explaining with Gemini.";
-    }
-}
-  
+const ZOOM_SECRET_TOKEN = '';
+const CLIENT_ID = '';
+const CLIENT_SECRET = '';
 
 // Webhook listener
 app.post('/webhook', (req, res) => {
@@ -165,18 +128,12 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
                 }));
             }
 
-            console.log("Gemini response: ", explainHardWordsWithGemini(msg.content.data));
+            console.log("Gemini response: ", await explainHardWordsWithGemini(msg.content.data));
         } catch (err) {
             // Raw audio received
             console.log(`Received audio packet (${data.length} bytes)`);
             const base64Audio = data.toString('base64');
             console.log('Raw audio data (base64):', base64Audio);
-
-            // Mock a transcribed sentence for now
-            const fakeSentence = "Despite the red tape, she managed to secure a green card.";
-
-            const geminiResponse = await explainHardWordsWithGemini(fakeSentence);
-            console.log('Gemini Explanation:\n', geminiResponse);
         }
     });
 
@@ -188,6 +145,16 @@ function connectToMediaWebSocket(mediaUrl, meetingUuid, streamId, signalingSocke
         console.log('Media socket closed');
     });
 }
+
+// Serve the main index.html for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+});
+
+// Catch-all route to handle client-side routing (must be after API routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+});
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
